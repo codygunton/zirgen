@@ -1,0 +1,43 @@
+# Component Documentation Index
+
+This directory contains AI-generated documentation for key components in the Zirgen project.
+
+## Available Components
+
+### Core Components
+- **[bootstrap.mdc](./bootstrap.mdc)** - Zirgen Bootstrap Component
+  - Location: `zirgen/bootstrap/`
+  - Purpose: Central orchestrator for building, compiling, and deploying zero-knowledge proof circuits
+  - Key Features: Multi-circuit support, cross-platform code generation, parallel processing
+
+- **[risc0_core.mdc](./risc0_core.mdc)** - RISC0 Core Component  
+  - Location: `risc0/core/`
+  - Purpose: Foundational utilities and data structures for RISC0 proof system
+  - Key Features: ELF processing, logging system, core utilities, source location tracking
+
+- **[zirgen_components.mdc](./zirgen_components.mdc)** - Zirgen Core Components
+  - Location: `zirgen/components/`
+  - Purpose: Fundamental building blocks for zero-knowledge proof circuits
+  - Key Features: Field arithmetic, bit manipulation, memory operations, cryptographic primitives
+
+## Documentation Standards
+
+Each component documentation includes:
+- **Overview**: High-level description and purpose
+- **Location**: File system path and build configuration
+- **Key Components**: Major modules and their responsibilities
+- **Dependencies**: Build system and external library requirements
+- **Usage Context**: How the component fits into the larger system
+- **Build Integration**: Compilation and deployment information
+
+## Maintenance
+
+This index is automatically updated when new component documentation is added. To add new component documentation:
+
+1. Create a new `.mdc` file in this directory
+2. Follow the established documentation template
+3. Update this index with the new component entry
+4. Ensure the documentation covers all key aspects listed above
+
+## Last Updated
+Generated: 2025-08-05

@@ -1,0 +1,151 @@
+# Zirgen Core Components
+
+## Overview
+The Zirgen components directory contains fundamental building blocks for zero-knowledge proof circuits. These components provide essential operations for field arithmetic, bit manipulation, memory operations, and cryptographic primitives used throughout the Zirgen proof system.
+
+## Location
+- **Path**: `zirgen/components/`
+- **Build Config**: `BUILD.bazel`
+- **Language**: C++
+- **Test Suite**: `test/` directory with comprehensive component tests
+
+## Key Components
+
+### Field and Arithmetic Components
+
+#### **bits.cpp/h**
+- **Purpose**: Bit manipulation and bit field operations
+- **Functionality**: Conversion between field elements and bit representations
+- **Use Cases**: Boolean logic, bit packing/unpacking, constraint generation for bit operations
+
+#### **bytes.cpp/h** 
+- **Purpose**: Byte-level data manipulation and validation
+- **Functionality**: Byte range checking, byte array operations, endianness handling
+- **Use Cases**: Data serialization, memory layout validation, byte-aligned operations
+
+#### **fpext.cpp/h**
+- **Purpose**: Field extension arithmetic operations
+- **Functionality**: Extended field operations, quadratic extension computations
+- **Use Cases**: Advanced cryptographic operations, elliptic curve computations
+
+#### **u32.cpp/h**
+- **Purpose**: 32-bit unsigned integer operations in field arithmetic
+- **Functionality**: Modular arithmetic, overflow checking, integer constraints
+- **Use Cases**: RISC-V instruction handling, word-level operations
+
+### Memory and Storage Components
+
+#### **ram.cpp/h**
+- **Purpose**: Random Access Memory simulation for circuits
+- **Functionality**: Memory read/write operations, memory consistency checking
+- **Use Cases**: Program memory, data storage, memory-based computations
+
+#### **reg.h**
+- **Purpose**: Register operations and state management
+- **Functionality**: Register allocation, state transitions, register constraints
+- **Use Cases**: CPU simulation, state machine implementation
+
+### Control Flow Components
+
+#### **mux.h**
+- **Purpose**: Multiplexer operations for conditional logic
+- **Functionality**: Conditional selection, branching logic, case statements
+- **Use Cases**: If-then-else constructs, switch statements, conditional execution
+
+#### **onehot.cpp/h**
+- **Purpose**: One-hot encoding and validation
+- **Functionality**: One-hot constraint generation, exclusive selection logic
+- **Use Cases**: State machine encoding, instruction decoding, mutual exclusion
+
+#### **iszero.cpp/h**
+- **Purpose**: Zero-checking operations and constraints
+- **Functionality**: Efficient zero detection, inverse computation for non-zero elements
+- **Use Cases**: Conditional logic, division operations, null checks
+
+### Cryptographic Components
+
+#### **plonk.cpp/h**
+- **Purpose**: PLONK protocol-specific operations and constraints
+- **Functionality**: Gate operations, permutation arguments, polynomial commitments
+- **Use Cases**: PLONK circuit construction, constraint system generation
+
+## Dependencies
+
+### Build System
+- **Bazel**: Primary build system with `BUILD.bazel` configuration
+- **C++ Standard**: Modern C++ (C++17/20) features
+- **Test Framework**: Integrated with Bazel test infrastructure
+
+### External Libraries
+- **RISC0 Core**: Foundational utilities from `risc0/core/`
+- **Field Arithmetic**: Underlying field implementation for finite field operations
+- **Logging System**: Integration with project-wide logging infrastructure
+
+## Usage Context
+
+### Circuit Construction
+These components serve as the building blocks for constructing zero-knowledge proof circuits:
+- **Low-level Operations**: Direct use in circuit construction for basic operations
+- **Higher-level Abstractions**: Combined to create complex computational patterns
+- **Constraint Generation**: Each component generates appropriate constraints for the proof system
+
+### Integration Points
+- **Compiler Backend**: Used by the Zirgen compiler for circuit generation
+- **DSL Implementation**: Support domain-specific language constructs
+- **Verification System**: Integration with proof verification components
+
+### Performance Considerations
+- **Optimized Implementations**: Each component is optimized for constraint efficiency
+- **Memory Layout**: Careful attention to memory usage and cache performance
+- **Parallel Processing**: Components designed to support parallel computation where applicable
+
+## Build Integration
+
+### Compilation
+```bash
+# Build all components
+bazel build //zirgen/components:all
+
+# Build specific component
+bazel build //zirgen/components:bits
+
+# Run component tests
+bazel test //zirgen/components/test:all
+```
+
+### Testing Strategy
+- **Unit Tests**: Individual component testing in `test/` directory
+- **Integration Tests**: Cross-component testing for complex operations  
+- **Performance Tests**: Benchmarking for constraint efficiency
+- **Regression Tests**: Ensuring consistency across updates
+
+## Architecture Notes
+
+### Design Principles
+- **Modularity**: Each component is self-contained with clear interfaces
+- **Composability**: Components can be combined to create complex operations
+- **Efficiency**: Optimized for minimal constraint overhead in proof systems
+- **Correctness**: Comprehensive testing ensures mathematical correctness
+
+### Extension Points
+- **Custom Components**: Framework supports addition of new component types
+- **Optimization Hooks**: Compiler can apply component-specific optimizations
+- **Platform Adaptation**: Components can be adapted for different proof systems
+
+## Development Workflow
+
+### Adding New Components
+1. Create `.cpp/.h` files following existing patterns
+2. Add appropriate `BUILD.bazel` targets
+3. Implement comprehensive test suite
+4. Update documentation and component index
+5. Ensure integration with existing build system
+
+### Maintenance
+- Regular performance profiling and optimization
+- Compatibility testing with proof system updates  
+- Documentation updates for API changes
+- Security review for cryptographic components
+
+## Last Updated
+Generated: 2025-08-05

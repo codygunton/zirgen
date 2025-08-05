@@ -1,0 +1,52 @@
+# RISC0 Core Component
+
+## Overview
+The RISC0 Core component provides foundational utilities and data structures for the RISC0 proof system implementation within the Zirgen framework.
+
+## Location
+- **Path**: `risc0/core/`
+- **Build**: `BUILD.bazel`
+
+## Key Components
+
+### ELF Module (`elf.cpp`, `elf.h`)
+- Handles ELF (Executable and Linkable Format) file parsing and processing
+- Critical for loading and analyzing RISC-V executable binaries
+- Used in the proof generation pipeline for guest program execution
+
+### Logging System (`log.cpp`, `log.h`)
+- Provides structured logging capabilities across the RISC0 system
+- Supports different log levels and structured output
+- Essential for debugging and monitoring proof generation
+
+### Utilities (`util.cpp`, `util.h`)
+- Core utility functions shared across the RISC0 implementation
+- Common data structures and helper functions
+- Performance-critical low-level operations
+
+### Source Location Tracking (`source_loc.h`)
+- Provides source code location tracking for debugging
+- Used throughout the system for error reporting and diagnostics
+- Helps with tracing issues back to specific code locations
+
+## Testing
+- **Test Directory**: `test/`
+- **Main Test Runner**: `gtest_main.cpp`
+- **User Mode Tests**: `usermode.cpp`
+
+## Dependencies
+- Uses Bazel build system
+- Integrates with Google Test framework for testing
+- Part of the larger Zirgen compiler infrastructure
+
+## Usage Context
+This core component serves as the foundation for:
+- RISC-V program execution simulation
+- Proof generation for RISC0 zkVM
+- Integration with the broader Zirgen circuit compilation system
+- ELF binary processing for guest programs
+
+## Build Integration
+- Uses Bazel BUILD files for compilation
+- Integrated with the parent Zirgen build system
+- Supports both development and production builds

@@ -1,0 +1,296 @@
+# Zirgen Bootstrap Component - AI Documentation
+
+## Component Overview and Purpose
+
+The Zirgen Bootstrap component is a sophisticated Rust CLI tool that serves as the central orchestrator for building, compiling, and deploying zero-knowledge proof circuits within the RISC Zero ecosystem. Located at `/home/cody/zirgen/zirgen/bootstrap/src/main.rs`, this tool acts as a critical bridge between the Bazel build system and the final deployment targets, managing complex file transformations, code generation, and formatting operations across multiple programming languages and platforms.
+
+**Primary Purpose**: The bootstrap tool is responsible for:
+- Building various circuit implementations (Bigint2, Calculator, Fib, Keccak, Predicates, Recursion, RV32IM variants, and Verify circuits)
+- Coordinating cross-language code generation (Rust, C++, CUDA, Metal)
+- Managing file copying operations from Bazel build outputs to target deployment directories
+- Applying language-specific formatting (rustfmt, clang-format, cargo fmt)
+- Providing verification capabilities through dry-run and check modes
+
+## Key Functionality and Features
+
+### 1. **Multi-Circuit Support**
+The tool supports bootstrapping nine distinct circuit types, each with specialized requirements:
+- **Bigint2**: Handles big integer operations for cryptographic field arithmetic
+- **Calculator**: Simple example circuit for demonstration purposes  
+- **Fib**: Fibonacci sequence circuit used for testing and benchmarking
+- **Keccak**: SHA-3/Keccak hash function implementation
+- **Predicates**: Recursion verification predicates
+- **Recursion**: Core recursive proof verification circuit
+- **Rv32im**: RISC-V 32-bit integer/multiply instruction set (version 1)
+- **Rv32imV2**: Enhanced version 2 of the RISC-V circuit
+- **Verify**: STARK verification circuit with Circom integration
+
+### 2. **Cross-Platform Code Generation**
+The tool manages code generation for multiple target platforms:
+- **Rust**: Core logic and FFI bindings (`*.rs`, `*.rs.inc`)
+- **C++**: Host-side implementations (`*.cpp`, `*.h`, `*.cpp.inc`, `*.h.inc`)
+- **CUDA**: GPU acceleration kernels (`*.cu`, `*.cuh`, `*.cu.inc`, `*.cuh.inc`)
+- **Metal**: Apple GPU compute kernels (`*.metal`)
+- **Circom**: Zero-knowledge circuit descriptions (`*.circom`)
+
+### 3. **Intelligent File Processing Pipeline**
+The bootstrap system implements a sophisticated rule-based file processing engine:
+- Pattern matching for source files using glob patterns
+- Configurable destination directory mapping
+- Prefix removal and suffix addition transformations
+- Compression support using XZ compression for specific file types
+- Language-specific formatting integration
+
+### 4. **Operation Modes**
+- **Normal Mode**: Full build and deployment
+- **Dry Run Mode**: Preview operations without executing file changes
+- **Check Mode**: Verify that installed files match generated outputs
+
+## Architecture and Design Patterns
+
+### 1. **Rule-Based Configuration System**
+The tool employs a declarative rule system (`Rule<'a>` struct) that encapsulates file transformation logic:
+
+```rust
+struct Rule<'a> {
+    pattern: &'a str,        // Glob pattern for source matching
+    dest_dir: &'a str,       // Target directory
+    remove_prefix: &'a str,  // Prefix to strip from filenames
+    base_suffix: &'a str,    // Suffix to add to base directory
+    compressed: bool,        // Whether to apply XZ compression
+}
+```
+
+This design enables:
+- **Composability**: Rules can be chained using builder pattern methods
+- **Reusability**: Common patterns can be extracted and reused
+- **Maintainability**: Changes to file organization require minimal code updates
+
+### 2. **Static Lifetime Architecture**
+The `Bootstrap` struct uses a unique static lifetime pattern:
+
+```rust
+fn main() {
+    let bootstrap: &'static mut _ = Box::leak(Box::new(Bootstrap::new(Args::parse())));
+    bootstrap.run();
+}
+```
+
+**Rationale**: This design decision enables safe concurrent access to the bootstrap instance from within threadpool callbacks without complex lifetime management or Arc/Mutex overhead.
+
+### 3. **Parallel Processing Design**
+The tool implements a threadpool-based architecture for I/O operations:
+- **ThreadPool**: Manages concurrent file operations
+- **Mutex<bool>**: Thread-safe error state tracking
+- **Work Distribution**: File copying and processing operations are distributed across worker threads
+
+### 4. **Two-Phase Build Strategy**
+1. **Build Phase**: Coordinates with Bazel to compile circuits
+2. **Install Phase**: Processes build outputs and deploys to target locations
+
+## Important Data Structures and Their Roles
+
+### 1. **Bootstrap Struct**
+```rust
+struct Bootstrap {
+    args: Args,              // CLI arguments and configuration
+    error: Mutex<bool>,      // Thread-safe error state
+    pool: ThreadPool,        // Concurrent processing engine
+}
+```
+
+**Role**: Central coordinator that manages the entire bootstrap process lifecycle.
+
+### 2. **Circuit Enum**
+```rust
+enum Circuit {
+    Bigint2, Calculator, Fib, Keccak, Predicates, 
+    Recursion, Rv32im, Rv32imV2, Verify
+}
+```
+
+**Role**: Type-safe enumeration of supported circuits, enabling compile-time verification of circuit-specific logic.
+
+### 3. **Args Struct**
+```rust
+struct Args {
+    circuit: Circuit,
+    output: Option<PathBuf>,
+    dry_run: bool,
+    check: bool,
+}
+```
+
+**Role**: Command-line interface definition using Clap, providing user-friendly circuit selection and operation modes.
+
+### 4. **EDSL Constants**
+The `edsl` module defines standard output file patterns:
+- `RUST_OUTPUTS`: Rust-specific generated files
+- `CPP_OUTPUTS`: C++ implementation files  
+- `CUDA_OUTPUTS`: CUDA kernel files
+- `METAL_OUTPUTS`: Metal compute shader files
+
+**Role**: Centralized configuration for cross-language code generation patterns.
+
+## Main Workflows and Processes
+
+### 1. **Standard Circuit Bootstrap Workflow**
+```
+Parse CLI Args → Initialize Bootstrap → Match Circuit Type → 
+Execute Bazel Build → Apply Install Rules → Process Files in Parallel → 
+Apply Formatting → Report Results
+```
+
+### 2. **File Processing Pipeline**
+For each source file:
+1. **Pattern Matching**: Check if file matches rule pattern
+2. **Path Transformation**: Apply prefix removal and suffix addition
+3. **Destination Mapping**: Calculate target file location
+4. **Content Processing**: Handle compression if specified
+5. **Format Application**: Run language-specific formatters
+6. **Verification**: In check mode, compare against existing files
+
+### 3. **EDSL-Style Circuit Processing**
+Special workflow for circuits using the EDSL (Embedded Domain Specific Language) pattern:
+1. **Multi-Target Generation**: Generate Rust, C++, CUDA, and Metal code
+2. **Structured Output**: Organize files into language-specific directories
+3. **Cross-Reference Handling**: Manage dependencies between generated files
+4. **Cargo Integration**: Apply Rust-specific formatting and dependency management
+
+## Dependencies and External Integrations
+
+### 1. **Build System Integration**
+- **Bazelisk/Bazel**: Primary build orchestration
+- **Hermetic Toolchains**: Platform-specific compiler configurations
+- **Config Selection**: Automatic platform detection (Linux AMD64, macOS ARM64)
+
+### 2. **Language Toolchain Integration**
+- **rustfmt**: Rust code formatting
+- **clang-format**: C/C++/CUDA code formatting  
+- **cargo fmt**: Rust workspace formatting
+- **XZ Compression**: Binary data compression for deployment
+
+### 3. **Platform Dependencies**
+- **Cross-Platform Support**: Linux and macOS
+- **Architecture Awareness**: AMD64 and ARM64 optimization
+- **GPU Backend Support**: CUDA and Metal compute targets
+
+## Error Handling Strategies
+
+### 1. **Multi-Level Error Management**
+The tool implements a sophisticated error handling strategy:
+
+```rust
+// Thread-safe error aggregation
+error: Mutex<bool>
+
+// File-level error handling with context
+if let Err(err) = self.check(&src_path, src_data, &tgt_path) {
+    writeln!(stdout().lock(), "ERROR: {} != {}: {}", 
+             src_path.display(), tgt_path.display(), err).unwrap();
+    *self.error.lock().unwrap() = true;
+}
+```
+
+### 2. **Graceful Degradation**
+- **Warning System**: Non-fatal issues generate warnings rather than failures
+- **Partial Success**: Individual file failures don't halt the entire process
+- **Detailed Reporting**: Comprehensive error context for debugging
+
+### 3. **Content Verification Strategy**
+The check mode implements sophisticated content comparison:
+- **Textual File Analysis**: Strips formatting-sensitive elements (whitespace, line numbers, copyright dates)
+- **Binary Comparison**: Direct byte-level comparison for non-textual files
+- **Diff Generation**: Contextual difference reporting for mismatches
+
+## Performance Considerations
+
+### 1. **Parallel Processing Optimization**
+- **ThreadPool Architecture**: Distributes I/O-bound operations across worker threads
+- **Concurrent File Operations**: Multiple files processed simultaneously
+- **Memory Efficiency**: Streaming operations for large files
+
+### 2. **Build Performance**
+- **Optimization Profile**: Debug builds use opt-level 3 to reduce bootstrap time
+- **Selective Building**: `install_from_bazel` builds only necessary targets
+- **Caching Strategy**: Leverages Bazel's incremental build capabilities
+
+### 3. **I/O Optimization**
+- **Streaming Compression**: XZ compression applied during copy operations
+- **Directory Pre-creation**: Batch directory creation to minimize system calls
+- **Permission Handling**: Creates files with appropriate permissions (avoiding read-only Bazel outputs)
+
+## Usage Patterns and Examples
+
+### 1. **Basic Circuit Bootstrap**
+```bash
+# Bootstrap the Fibonacci circuit to default location
+bootstrap fib
+
+# Bootstrap with custom output directory
+bootstrap fib --output /path/to/risc0-monorepo
+
+# Preview operations without execution
+bootstrap fib --dry-run
+
+# Verify installed files are up-to-date
+bootstrap fib --check
+```
+
+### 2. **Production Deployment Pattern**
+```bash
+# Bootstrap all critical circuits for RISC Zero monorepo
+bootstrap recursion --output /risc0-repo
+bootstrap rv32im-v2 --output /risc0-repo  
+bootstrap keccak --output /risc0-repo
+bootstrap bigint2 --output /risc0-repo
+```
+
+### 3. **Development Workflow**
+```bash
+# Check if generated files are current
+bootstrap recursion --check
+
+# Update after circuit changes
+bootstrap recursion --output /risc0-repo
+
+# Verify the update was successful
+bootstrap recursion --check
+```
+
+## Maintenance and Development Notes
+
+### 1. **Adding New Circuits**
+To add a new circuit type:
+1. Add enum variant to `Circuit`
+2. Implement circuit-specific method in `Bootstrap`
+3. Add match arm in `Bootstrap::run()`
+4. Define appropriate install rules
+5. Update CLI documentation
+
+### 2. **Rule System Extension**
+The rule system can be extended by:
+- Adding new fields to the `Rule` struct
+- Implementing additional builder methods
+- Creating specialized rule types for complex transformations
+- Adding new file type handlers
+
+### 3. **Cross-Platform Considerations**
+- **Path Handling**: Uses Rust's `PathBuf` for cross-platform compatibility
+- **Tool Availability**: Graceful handling of missing formatters
+- **Platform Detection**: Automatic Bazel config selection based on target platform
+
+### 4. **Future Enhancement Opportunities**
+- **Incremental Processing**: Skip unchanged files to improve performance
+- **Validation Framework**: Extended content verification beyond simple comparison
+- **Configuration Externalization**: Move hardcoded rules to external configuration files
+- **Metrics Collection**: Track bootstrap performance and success rates
+- **Dependency Tracking**: Automatic rebuilding based on source file changes
+
+### 5. **Debugging and Troubleshooting**
+- **Verbose Logging**: Enable with `RUST_LOG=debug`
+- **Dry Run Analysis**: Use `--dry-run` to understand planned operations
+- **Check Mode Verification**: Use `--check` to identify configuration drift
+- **Bazel Integration**: Monitor Bazel output for build-time issues
+
+This bootstrap component represents a critical piece of infrastructure that enables the RISC Zero ecosystem's zero-knowledge proof circuits to be efficiently built, deployed, and maintained across multiple programming languages and target platforms. Its sophisticated architecture balances performance, maintainability, and extensibility while handling the complex requirements of cross-language code generation and deployment.
