@@ -71,7 +71,8 @@
     TblEntry(6, 1, 0x23, 0x1,   -1, SH) \
     TblEntry(6, 2, 0x23, 0x2,   -1, SW) \
     TblEntry(7, 0, 0x73, 0x0, 0x00, EANY) \
-    TblEntry(7, 1, 0x73, 0x0, 0x18, MRET)
+    TblEntry(7, 1, 0x73, 0x0, 0x18, MRET) \
+    TblEntry(7, 2, 0x0f, 0x0,   -1, FENCE)
 // clang-format on
 
 namespace zirgen {
@@ -608,6 +609,10 @@ private:
       }
     case InstType::MRET:
       return context.doMRET();
+    case InstType::FENCE:
+      // FENCE is a no-op in our single-threaded zkVM
+      context.setPC(context.getPC() + 4);
+      return true;
     default:
       __builtin_unreachable();
     }
