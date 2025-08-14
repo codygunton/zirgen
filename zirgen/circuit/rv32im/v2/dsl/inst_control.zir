@@ -182,10 +182,10 @@ component ControlUserEcallOrFence(cycle: Reg, input: InstInput) {
   // Position 2 handles both USER_ECALL (EANY in user mode) and FENCE
   // USER_ECALL comes from InsnKind::Eany with mode=0
   // FENCE comes from InsnKind::Fence
-  
-  // Only valid in decode state  
+
+  // Only valid in decode state
   input.state = StateDecode();
-  
+
   // We differentiate based on what the prover knows from the execution trace
   // For fence: the instruction opcode is 0x0f
   // For ecall: the instruction opcode is 0x73 and mode is 0
@@ -194,23 +194,27 @@ component ControlUserEcallOrFence(cycle: Reg, input: InstInput) {
   pc_addr := AddrDecomposeBits(input.pc_u32, safeMode);
   pc_addr.low2 = 0;
   load_inst := MemoryRead(cycle, pc_addr);
-  
+
   // The prover knows which one it is based on the opcode
   // If low byte is 0x0f it's fence, if 0x73 it's ecall
   is_fence := NondetBitReg(Isz((load_inst.low % 128) - 0x0f));
-  
+
   if (is_fence) {
-    // FENCE: Simply advance PC by 4
+    // rd and rs1 are unused and are to be ignored (base implementations)
+    // or zeroed (standard implementations). The pragmatic choice here, given
+    // the available instruction decomposition, is a hybrid approach.
+    load_inst.low = 0x000f;
+
     new_pc := NormalizeU32(AddU32(input.pc_u32, ConstU32<4>()));
     InstOutput(new_pc, StateDecode(), input.mode)
   } else {
     // USER_ECALL: Must be in user mode
     input.mode = 0;
-    
+
     // Verify it's an ECALL instruction
     load_inst.low = 0x0073;
     load_inst.high = 0x0000;
-    
+
     // Jump to ecall dispatch address
     new_pc_addr := MemoryRead(cycle, EcallDispatchWord());
     MemoryWrite(cycle, MepcWord(), input.pc_u32);
@@ -222,7 +226,7 @@ component Control0(cycle: Reg, inst_input: InstInput) {
   DoCycleTable(cycle);
   inst_input.minor_onehot -> (
     ControlLoadRootAndNonce(cycle, inst_input),  // 0: STATE_LOAD_ROOT
-    ControlResume(cycle, inst_input),            // 1: STATE_RESUME  
+    ControlResume(cycle, inst_input),            // 1: STATE_RESUME
     ControlUserEcallOrFence(cycle, inst_input),  // 2: USER_ECALL or FENCE
     ControlMRET(cycle, inst_input),              // 3: MRET
     ControlSuspend(cycle, inst_input),           // 4: STATE_SUSPEND
