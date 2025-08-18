@@ -41,6 +41,15 @@ component IllegalLoadOp(input: MemLoadInput) {
   ValU32(0, 0)
 }
 
+component OpFENCE(input: MemLoadInput) {
+  VerifyOpcodeF3(input.decoded, 0x0f, 0x0);
+  // FENCE is encoded as an I-type instruction but doesn't actually use memory
+  // MemLoadInput has already computed addr = rs1 + immI and read from memory
+  // We just ignore the memory read result since FENCE doesn't use it
+  // Return zero value (no register write since do_write is 0)
+  ValU32(0, 0)
+}
+
 component IllegalStoreOp(input: MemStoreInput) {
   0 = 1;
   ValU32(0, 0)
@@ -55,11 +64,12 @@ component Mem0(cycle: Reg, inst_input: InstInput) {
     OpLW(input),
     OpLBU(input),
     OpLHU(input),
-    IllegalLoadOp(input),
+    OpFENCE(input),
     IllegalLoadOp(input),
     IllegalLoadOp(input)
   );
-  WriteRd(cycle, input.ii, input.decoded, 1, output);
+  do_write := inst_input.minor_onehot -> (1, 1, 1, 1, 1, 0, 0, 0);
+  WriteRd(cycle, input.ii, input.decoded, do_write, output);
   pc_add := NormalizeU32(AddU32(inst_input.pc_u32, ConstU32<4>()));
   InstOutput(pc_add, StateDecode(), inst_input.mode)
 }
